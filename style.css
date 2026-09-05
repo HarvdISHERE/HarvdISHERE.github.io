@@ -1,45 +1,588 @@
-.map-container {
-  position: relative;
-  width: 100vw;
-  height: 100vh;
-  background-image: url("./src/background/bk_hongri.png");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+/* 从 Google Fonts 引入两种字体：Manrope 用于正文，DM Mono 用于编号和标签。 */
+@import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap");
+
+/* :root 中的变量可以让全站颜色集中管理，修改一次即可影响多个地方。 */
+:root {
+  --ink: #14211d;
+  --muted: #74807a;
+  --paper: #f2f3ed;
+  --card: #fbfcf8;
+  --line: #d6ddd4;
+  --lime: #d7f36a;
+  --teal: #17675c;
+  --green: #07ed44;
 }
-.place,
-.player,
-.building {
-  position: absolute;
-  cursor: pointer;
-  user-select: none;
-  font-size: 14px;
+
+/* 使用 border-box 后，width 会包含 padding 和 border，布局更容易计算。 */
+* {
+  margin: 0;
+  padding: 0;
   box-sizing: border-box;
 }
-.place {
-  width: 200px;
-  height: 200px;
+
+/* 平滑滚动会让点击页面内锚点时有过渡动画。 */
+html {
+  scroll-behavior: smooth;
 }
-.player {
-  z-index: 10;
-  width: 64px;
-  height: 64px;
+
+body {
+  background-color: var(--paper);
+  color: var(--ink);
+  font-family: "Manrope", "Microsoft YaHei", sans-serif;
 }
-.building {
-  width: 200px;
-  height: 200px;
+
+/* 页面上的浅色点阵背景。pointer-events: none 保证它不会挡住鼠标点击。 */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  opacity: 0.32;
+  pointer-events: none;
+  background-image: radial-gradient(#aeb9ad 0.7px, transparent 0.7px);
+  background-size: 18px 18px;
 }
-/* 160 +50 =210，父盒子维持200px，JS偏移常量68完全不用动 */
-.place .map,
-.building .map {
-  width: auto;
-  height: auto;
-  max-width: 210px;
-  max-height: 210px;
-  object-fit: contain;
+
+/* 页面主容器：桌面端最多 1180px，并在左右保留 42px 空间。 */
+.page-shell {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 30px 42px;
+  position: relative;
 }
-.player .map {
+
+/* display: flex 让导航内容排列在一行；space-between 把两端内容推开。 */
+.topbar {
+  display: flex;
+  gap: 2rem;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--line);
+  letter-spacing: 0.08em;
+  font-size: 12px;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* 导航左侧的两个链接也使用 Flex 横向排列。 */
+.nav-left {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+}
+
+/* brand span 是圆形的 WJ 徽标。 */
+.brand span {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin: 6px;
+  border: 1px solid var(--ink);
+  border-radius: 50%;
+  font-size: 9px;
+  vertical-align: middle;
+}
+
+/* i 元素本身没有文字，这里用宽高和 border-radius 画出状态圆点。 */
+.status i {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  vertical-align: middle;
+}
+
+.status {
+  color: var(--muted);
+}
+.topbar a {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.brand {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.hero {
+  /* rise-in 让首屏内容从下方淡入；grid 负责文字和头像的双栏布局。 */
+  padding: 82px 0 72px;
+  animation: rise-in 0.7s ease both;
+  display: grid;
+  grid-template-columns: 1fr 330px;
+  gap: 80px;
+  align-items: center;
+}
+
+.hero span {
+  /* clamp(最小值, 推荐值, 最大值) 让标题随屏幕宽度缩放。 */
+  font-size: 12px;
+  color: var(--teal);
+  letter-spacing: 0.2em;
+}
+#profile-title {
+  font-size: clamp(64px, 11vw, 120px);
+  color: var(--ink);
+  margin-bottom: 2px;
+}
+#DOT {
+  color: #1c4a0c;
+  font-style: normal;
+}
+.eyebrow,
+.status,
+.work-meta,
+.head-img-label {
+  font-family: "DM Mono", monospace;
+  letter-spacing: 0.1em;
+}
+
+#education-background {
+  color: var(--teal);
+  margin-bottom: 12px;
+}
+
+#leave-message {
+  color: var(--muted);
+  max-width: 520px;
+  line-height: 1.7;
+}
+
+.link {
+  /* flex 让两个链接保持一行，并用 gap 控制它们之间的距离。 */
+  margin-top: 28px;
+  display: flex;
+  /* 让两个链接按照同一条垂直中心线对齐。 */
+  align-items: center;
+  gap: 24px;
+}
+.link a {
+  text-decoration: none;
+  font-weight: bold;
+}
+.link a:nth-child(1) {
+  background-color: var(--lime);
+  color: var(--ink);
+  padding: 12px 16px;
+}
+
+.link a:nth-child(1):hover {
+  transform: translateY(-3px);
+  box-shadow: 4px 4px 0 var(--teal);
+}
+
+.link a:nth-child(2) {
+  color: var(--ink);
+  font-size: 15px;
+  /* 覆盖 .link a 的 bold，使用普通字重。 */
+  font-weight: 400;
+  line-height: 1.2;
+  /* 使用文字下划线，而不是 border-bottom，避免下划线脱离文字。 */
+  text-decoration-line: underline;
+  text-decoration-color: var(--ink);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 1px;
+}
+
+.head {
+  /* relative 让内部的标签可以使用 absolute 定位。 */
+  position: relative;
+  padding: 22px;
+  background: var(--teal);
+  /* rotate(3deg) 让头像卡片顺时针倾斜 3 度。 */
+  transform: rotate(3deg);
+  /* 单独的动画保留 rotate，否则动画结束时可能覆盖倾斜效果。 */
+  animation: rise-in-head 0.7s 0.15s ease both;
+}
+
+.head::after {
+  /* ::after 是伪元素，用来绘制头像内部的装饰边框。 */
+  content: "";
+  position: absolute;
+  inset: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  pointer-events: none;
+}
+.head-img {
+  /* object-fit: cover 保证图片填满区域，同时保持原始比例。 */
+  display: block;
   width: 100%;
-  height: 100%;
-  object-fit: contain;
+  aspect-ratio: 1/1.13;
+  object-fit: cover;
+  filter: saturate(0.75) contrast(1.05);
+}
+
+.top-label {
+  top: 31px;
+  left: 34px;
+}
+
+.bottom-label {
+  right: 34px;
+  bottom: 30px;
+  text-align: right;
+  line-height: 1.5;
+}
+span.head-img-label {
+  position: absolute;
+  z-index: 1;
+  color: white;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+}
+.content-grid {
+  /* 两列布局：左侧较宽，右侧较窄。 */
+  display: grid;
+  grid-template-columns: 1.45fr 0.8fr;
+  gap: 20px;
+  margin: 40px 0;
+}
+.panel {
+  /* 两个面板共用的卡片外观。 */
+  padding: 34px;
+  background-color: var(--card);
+  border: 1px solid var(--line);
+}
+
+.skill-panel h2 {
+  margin-bottom: 0;
+}
+
+.skill-list {
+  /* flex-direction: column 让技能条目从上到下排列。 */
+  display: flex;
+  flex-direction: column;
+}
+
+.skill-item {
+  /* 第一列放编号，第二列放技能名称和说明。 */
+  display: grid;
+  grid-template-columns: 38px 1fr;
+  gap: 20px;
+  align-items: start;
+  padding: 20px 0;
+  border-top: 1px solid var(--line);
+  animation: none;
+  transition: none;
+}
+
+.skill-item:last-child {
+  padding-bottom: 0;
+}
+
+.skill-item .number {
+  color: var(--teal);
+  font-family: "DM Mono", monospace;
+}
+
+.skill-item h3 {
+  margin-bottom: 7px;
+  font-size: 16px;
+}
+
+.skill-item p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.contact-panel {
+  /* 联系面板使用深色背景，与左侧浅色面板形成对比。 */
+  background: var(--ink);
+  color: white;
+}
+
+.contact-panel .eyebrow {
+  color: var(--lime);
+}
+
+.detail-block {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 18px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  animation: none;
+  transition: none;
+}
+
+.detail-block span {
+  color: #8f9d95;
+  font:
+    500 10px "DM Mono",
+    monospace;
+  letter-spacing: 0.12em;
+}
+
+.detail-block strong,
+.detail-block a {
+  color: white;
+  font-size: 14px;
+  text-decoration: none;
+  font-weight: normal;
+}
+
+.quote {
+  margin-top: 35px;
+  color: var(--lime);
+  font-size: 22px;
+  line-height: 1.35;
+  letter-spacing: -0.04em;
+}
+
+.work-section {
+  padding: 40px 0;
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: "DM Mono", monospace;
+  letter-spacing: 0.08em;
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+}
+
+.work-grid {
+  /* 三张卡片组成网格，第一列比后两列稍宽。 */
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr; /* 第一个精选卡片更宽，视觉有重点 */
+  gap: 18px;
+  margin-top: 24px;
+}
+
+/* ========== 作品卡片基础样式 ========== */
+.work-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  transition:
+    transform 0.25s,
+    box-shadow 0.25s; /* 平滑过渡动画 */
+}
+
+/* 鼠标悬浮时卡片向上移动，并出现偏移的阴影。 */
+.work-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 7px 7px 0 var(--teal);
+}
+
+/* ========== 作品封面视觉区 ========== */
+.work-visual {
+  /* position: relative 让装饰圆形可以相对于封面定位。 */
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  min-height: 205px;
+  padding: 22px;
+  overflow: hidden;
+  color: white;
+  font:
+    500 11px "DM Mono",
+    monospace;
+  letter-spacing: 0.1em;
+  line-height: 1.5;
+}
+
+/* 封面的两个半透明圆形装饰，使用伪元素避免额外的 HTML 标签。 */
+.work-visual::before,
+.work-visual::after {
+  content: "";
+  position: absolute;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 50%;
+}
+
+.work-visual::before {
+  width: 190px;
+  height: 190px;
+  top: -70px;
+  right: -35px;
+}
+
+.work-visual::after {
+  width: 280px;
+  height: 280px;
+  top: -115px;
+  right: -80px;
+}
+
+/* z-index 让封面文字和图标显示在装饰圆形的上面。 */
+.work-visual span,
+.work-visual b {
+  position: relative;
+  z-index: 1;
+}
+
+.work-visual b {
+  color: var(--lime);
+  font-size: 27px;
+  font-weight: 400;
+}
+
+/* 三个封面的主题色：研究、游戏和项目分别使用不同颜色。 */
+.visual-paper {
+  background: #39766a;
+}
+.visual-game {
+  background: #ca7548;
+}
+.visual-code {
+  background: #313c46;
+}
+
+/* ========== 卡片内容区 ========== */
+.work-card-body {
+  padding: 22px;
+}
+
+.work-meta {
+  /* space-between 把分类文字放左边，把项目编号放右边。 */
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  color: var(--teal);
+}
+
+.work-card h3 {
+  margin-bottom: 10px;
+  font-size: 19px;
+}
+
+.work-card p {
+  min-height: 42px;
+  margin-bottom: 22px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.work-card a {
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  border-bottom: 1px solid var(--ink);
+  padding-bottom: 4px;
+}
+
+.work-card a span {
+  margin-left: 8px;
+  font-size: 16px;
+}
+
+/* ========== 筛选按钮样式 ========== */
+.projects-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  margin-bottom: 30px;
+}
+
+.filters-button {
+  /* button 默认有浏览器样式，这里重新定义它，让它匹配页面视觉。 */
+  padding: 9px 13px;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--line);
+  font:
+    500 11px "DM Mono",
+    monospace;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filters-button:hover,
+.filters-button.is-active {
+  /* hover 是鼠标悬浮状态，is-active 是 JavaScript 添加的选中状态。 */
+  color: var(--ink);
+  background: var(--lime);
+  border-color: var(--lime);
+}
+
+@keyframes rise-in {
+  /* 首屏普通内容：从下方移动到原位置，同时渐渐出现。 */
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes rise-in-head {
+  /* 头像动画需要在移动过程中一直保留 3 度旋转。 */
+  from {
+    opacity: 0;
+    transform: translateY(18px) rotate(3deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) rotate(3deg);
+  }
+}
+
+@media (max-width: 760px) {
+  /* 屏幕小于 760px 时进入移动端布局。 */
+  .page-shell {
+    padding: 20px;
+  }
+  .nav-left {
+    gap: 12px;
+  }
+  .nav-left > a:last-child {
+    display: none;
+  }
+  .hero {
+    /* 手机屏幕空间有限，文字和头像改为上下排列。 */
+    grid-template-columns: 1fr;
+    gap: 45px;
+    padding: 58px 0 45px;
+  }
+  .head {
+    width: min(100%, 330px);
+    justify-self: center;
+  }
+  .content-grid,
+  .work-grid {
+    /* 两列内容在手机上改为单列，避免文字过窄。 */
+    grid-template-columns: 1fr;
+  }
+  .content-grid {
+    margin: 25px 0;
+  }
+  .panel {
+    padding: 25px;
+  }
+  .projects-filters {
+    justify-content: flex-start;
+    margin: 22px 0 26px;
+  }
+  .work-visual {
+    min-height: 170px;
+  }
+  .footer {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* 用户系统设置了减少动画时，尽量关闭动画，减少不适。 */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

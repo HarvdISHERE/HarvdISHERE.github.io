@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>古风地图</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="game-status">点击地点移动，点击附近的角色进行攻击</div>
+    <div class="turn-info">等待回合系统启动</div>
+    <div class="character-stock" hidden></div>
+    <div class="map-entry" hidden>
+      <span class="map-entry-name"></span>
+      <button class="enter-map-button" type="button">进入地图</button>
+    </div>
+    <button class="leave-map-button" type="button" hidden>返回大地图</button>
+    <div class="map-container"></div>
+    <script src="map.js"></script>
+    <script src="main.js"></script>
+  </body>
+</html>
